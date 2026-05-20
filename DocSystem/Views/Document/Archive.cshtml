@@ -1,0 +1,301 @@
+﻿@using DataAccess.Entities
+@model DataAccess.Entities.Document
+@{
+    var students = ViewBag.Students as List<Student>;
+    var documentProp = new DocumentProperty();
+}
+
+<style>
+    .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .card-hover {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+    .btn-gradient {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+        .btn-gradient:hover {
+            background: linear-gradient(45deg, #5a67d8, #6b46a0);
+            transform: scale(1.05);
+        }
+
+    .btn-add {
+        background: linear-gradient(45deg, #f093fb, #f5576c);
+        border: none;
+    }
+
+        .btn-add:hover {
+            background: linear-gradient(45deg, #e07cc9, #e8455a);
+            transform: scale(1.05);
+        }
+
+    .table-custom {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+        .table-custom thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+    .input-custom {
+        border: 2px solid #e0e0e0;
+        transition: all 0.3s ease;
+    }
+
+        .input-custom:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+
+    .property-row {
+        animation: slideIn 0.3s ease;
+    }
+
+    @@keyframes slideIn {
+        from
+
+    {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    }
+</style>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card card-hover shadow-lg border-0">
+                <div class="card-header gradient-bg text-white text-center py-4">
+                    <h2 class="mb-0">
+                        <i class="fas fa-file-alt"></i> Create New Document
+                    </h2>
+                    <p class="mb-0 mt-2 opacity-75">Fill in the document details below</p>
+                </div>
+
+                <div class="card-body p-4">
+                    <form asp-action="Archive" method="post">
+                        <!-- Document Name -->
+                        <div class="form-group mb-4">
+                            <label asp-for="DocumentName" class="form-label fw-bold text-primary">
+                                <i class="fas fa-file-signature"></i> Document Name
+                            </label>
+                            <input asp-for="DocumentName" class="form-control input-custom" placeholder="Enter document name..." />
+                        </div>
+
+                        <!-- Student Selection -->
+                        <div class="form-group mb-4">
+                            <label class="form-label fw-bold text-primary">
+                                <i class="fas fa-user-graduate"></i> Student
+                            </label>
+                            <select asp-for="StudentId" class="form-control input-custom">
+                                <option value="">Select a student...</option>
+                                @foreach (var student in students)
+                                {
+                                    <option value="@student.Id">@student.Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Add Properties Section -->
+                        <div class="card mb-4 border-0 shadow-sm">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0 text-primary">
+                                    <i class="fas fa-plus-circle"></i> Add Document Properties
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-5 mb-3">
+                                        <label class="form-label fw-bold">Property Name</label>
+                                        <input id="PropertyName" class="form-control input-custom" placeholder="e.g., Department" />
+                                    </div>
+                                    <div class="col-md-5 mb-3">
+                                        <label class="form-label fw-bold">Property Value</label>
+                                        <input id="PropertyValue" class="form-control input-custom" placeholder="e.g., Computer Science" />
+                                    </div>
+                                    <div class="col-md-2 mb-3 d-flex align-items-end">
+                                        <button type="button" class="btn btn-add w-100" onclick="addProperty()">
+                                            <i class="fas fa-plus"></i> Add
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Properties Table -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3">
+                                <i class="fas fa-table-list"></i> Properties List
+                            </h5>
+                            <div class="table-responsive">
+                                <table class="table table-custom table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th><i class="fas fa-tag"></i> Property</th>
+                                            <th><i class="fas fa-value"></i> Value</th>
+                                            <th width="50"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="propertiesTable">
+                                        @foreach (var prop in Model.DocumentProperties)
+                                        {
+                                            <tr class="property-row">
+                                                <td>@prop.PropertyName</td>
+                                                <td>@prop.PropertyValue</td>
+                                                <td>
+                                                    <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">
+                                                        <i>🗑</i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-3 mt-4">
+                            <button type="submit" class="btn btn-gradient flex-grow-1 text-white py-2">
+                                <i class="fas fa-save"></i> Save Document
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary flex-grow-1 py-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function addProperty() {
+        var name = document.getElementById('PropertyName').value;
+        var value = document.getElementById('PropertyValue').value;
+
+        if (name && value) {
+            var table = document.getElementById('propertiesTable');
+            var row = table.insertRow();
+            row.className = 'property-row';
+
+            var index = table.rows.length - 1;
+
+            row.innerHTML = `
+                <td><strong>${escapeHtml(name)}</strong></td>
+                <td>${escapeHtml(value)}</td>
+                <td>
+                    <input type="hidden" name="DocumentProperties[${index}].PropertyName" value="${escapeHtml(name)}" />
+                    <input type="hidden" name="DocumentProperties[${index}].PropertyValue" value="${escapeHtml(value)}" />
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+
+            // Clear inputs
+            document.getElementById('PropertyName').value = '';
+            document.getElementById('PropertyValue').value = '';
+
+            // Show success effect
+            showTemporaryMessage('Property added successfully!', 'success');
+        } else {
+            showTemporaryMessage('Please fill both fields!', 'error');
+        }
+    }
+
+    function removeRow(btn) {
+        if (confirm('Remove this property?')) {
+            var row = btn.closest('tr');
+            row.remove();
+
+            // Re-index remaining rows
+            var table = document.getElementById('propertiesTable');
+            for (var i = 0; i < table.rows.length; i++) {
+                var hiddenInputs = table.rows[i].querySelectorAll('input[type="hidden"]');
+                hiddenInputs.forEach(input => {
+                    var name = input.getAttribute('name');
+                    if (name) {
+                        var newName = name.replace(/\[(\d+)\]/, `[${i}]`);
+                        input.setAttribute('name', newName);
+                    }
+                });
+            }
+
+            showTemporaryMessage('Property removed', 'info');
+        }
+    }
+
+    function showTemporaryMessage(message, type) {
+        var colors = {
+            success: '#4caf50',
+            error: '#f44336',
+            info: '#2196f3'
+        };
+
+        var toast = document.createElement('div');
+        toast.textContent = message;
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${colors[type]};
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 9999;
+            animation: slideInRight 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        `;
+
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<style>
+    @@keyframes slideInRight {
+        from
+
+    {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    }
+</style>

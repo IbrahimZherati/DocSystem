@@ -1,0 +1,116 @@
+﻿@{
+    ViewData["Title"] = "QR Validation";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4>QR Code Validation</h4>
+                </div>
+                <div class="card-body">
+                    <form id="qrForm">
+                        <div class="mb-3">
+                            <label class="form-label">Upload QR Code Image</label>
+                            <input type="file" id="qrImage" class="form-control" accept="image/*" required />
+                        </div>
+                        <div class="mb-3 text-center">
+                            <img id="preview" style="max-width: 200px; display: none; border: 1px solid #ddd; padding: 5px;" />
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Validate QR Code</button>
+                    </form>
+
+                    <div id="result" class="mt-3" style="display: none;">
+                        <div class="alert" id="resultAlert"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script>
+    // Preview image when selected
+    document.getElementById('qrImage').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const preview = document.getElementById('preview');
+                preview.src = event.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Handle form submission
+    document.getElementById('qrForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const fileInput = document.getElementById('qrImage');
+        const file = fileInput.files[0];
+
+        if (!file) {
+            alert('Please select an image');
+            return;
+        }
+
+        // Read and decode QR code
+        const reader = new FileReader();
+        reader.onload = async function(event) {
+            const img = new Image();
+            img.onload = async function() {
+                // Create canvas to read QR code
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, img.width, img.height);
+
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const qrCode = jsQR(imageData.data, canvas.width, canvas.height);
+
+                if (qrCode) {
+                    const refNumber = qrCode.data;
+                    await validateRefNumber(refNumber);
+                } else {
+                    showResult('No QR code found in the image', 'danger');
+                }
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    async function validateRefNumber(refNumber) {
+        try {
+            const response = await fetch('@Url.Action("CheckValid", "Document")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(refNumber)
+            });
+
+            const message = await response.text();
+
+            if (response.ok) {
+                showResult(message, 'success');
+            } else {
+                showResult(message, 'danger');
+            }
+        } catch (error) {
+            showResult('Network error', 'danger');
+        }
+    }
+
+    function showResult(message, type) {
+        const resultDiv = document.getElementById('result');
+        const alertDiv = document.getElementById('resultAlert');
+
+        resultDiv.style.display = 'block';
+        alertDiv.className = `alert alert-${type}`;
+        alertDiv.innerHTML = `<strong>${type === 'success' ? '✓' : '✗'}</strong> ${message}`;
+    }
+</script>
