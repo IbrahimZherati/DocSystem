@@ -78,7 +78,7 @@ namespace DocSystem.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CheckValid(string refNumber)
+        public async Task<IActionResult> CheckValid([FromBody]string refNumber)
         {
             try
             {

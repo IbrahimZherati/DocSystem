@@ -22,6 +22,7 @@ namespace DataAccess.Entities
         [JsonPropertyName("documentProperties")]
         public ICollection<DocumentProperty> DocumentProperties { get; set; } = new List<DocumentProperty>();
 
+        [JsonPropertyName("refNumber")]
         public string RefNumber { get;  set; } = null!;
         public string? QR { get;  set; }
 
