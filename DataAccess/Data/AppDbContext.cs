@@ -7,6 +7,12 @@ public class AppDbContext : DbContext
     public DbSet<Student> Students { get; set; }
     public DbSet<DocumentProperty> DocumentProperties { get; set; }
 
+
+    public AppDbContext()
+    {
+
+    }
+
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
     }
