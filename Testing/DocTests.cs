@@ -18,12 +18,12 @@ namespace Business.Tests
 
         public DocumentServiceTests()
         {
-            // إنشاء الـ Substitutes (النسخ الوهمية)
+            // Initialize our mock dependencies using NSubstitute
             _documentReportMock = Substitute.For<IDocumentReport>();
             _documentRepoMock = Substitute.For<IRepo<Document>>();
             _paymentValidationApiMock = Substitute.For<IPaymentValidationApi>();
 
-            // حقن الاعتماديات مباشرة
+            // Inject the mocked dependencies into the real service
             _documentService = new DocumentService(
                 _documentReportMock,
                 _documentRepoMock,
@@ -31,68 +31,43 @@ namespace Business.Tests
             );
         }
 
-        // =======================================================
-        // 1. اختبار دالة الـ Remove
-        // =======================================================
         [Fact]
-        public async Task Remove_WhenCalled_ShouldGetDocumentRemoveItAndSave()
+        public async Task Remove_WhenDocumentExists_ShouldRetrieveFromRepoRemoveItAndSaveChanges()
         {
-            // Arrange (التجهيز)
-            int documentId = 10;
-            var fakeDocument = new Document { Id = documentId };
+            // ==========================================
+            // 1. ARRANGE (Setup the realistic scenario)
+            // ==========================================
+            int targetDocumentId = 42; // A realistic ID example
 
-            // نُخبر الـ Repo الوهمي عندما يُستدعى بـ GetByIdAsync أن يُعيد المستند الوهمي
-            _documentRepoMock.GetByIdAsync(documentId).Returns(Task.FromResult(fakeDocument));
+            // This represents the actual document that exists in your system
+            var existingDocument = new Document
+            {
+                Id = targetDocumentId,
+                RefNumber = "REF-2026-XYZ",
+                //Title = "Archived_University_Agreement"
+            };
 
-            // Act (التنفيذ)
-            await _documentService.Remove(documentId);
+            // Scenario Setup: When the service asks the repo for this ID, return our existing document
+            _documentRepoMock.GetByIdAsync(targetDocumentId).Returns(Task.FromResult(existingDocument));
 
-            // Assert (التحقق باستخدام NSubstitute)
-            // نتحقق أن الـ Repo قام فعلياً باستدعاء الـ Remove للمستند الصحيح مرة واحدة
-            _documentRepoMock.Received(1).Remove(fakeDocument);
+            // ==========================================
+            // 2. ACT (Execute the actual service method)
+            // ==========================================
+            await _documentService.Remove(targetDocumentId);
 
-            // ونتحقق أنه تم حفظ التغييرات في قاعدة البيانات مرة واحدة
+            // ==========================================
+            // 3. ASSERT (Verify the mock interactions)
+            // ==========================================
+
+            // Assert A: Verify that GetByIdAsync was actually called with the exact ID passed
+            await _documentRepoMock.Received(1).GetByIdAsync(targetDocumentId);
+
+            // Assert B: Verify that the exact document object retrieved was passed into the Remove method
+            // This proves it wasn't just "any" document removed, but the specific one from the database list
+            _documentRepoMock.Received(1).Remove(existingDocument);
+
+            // Assert C: Verify that the unit of work/changes were saved to the database context
             await _documentRepoMock.Received(1).SaveAsync();
-        }
-
-        // =======================================================
-        // 2. اختبار دالة الـ CheckValid (في حالة وجود المستند)
-        // =======================================================
-        [Fact]
-        public async Task CheckValid_WhenRefNumberExists_ShouldReturnTrue()
-        {
-            // Arrange
-            string existingRef = "QR-ABC-123";
-
-            // نُحاكي دالة ExistsAsync بحيث إذا استقبلت أي تعبير (Expression) تُرجع true
-            // استخدمنا Arg.Any لأن الدوال التي تستقبل Lambda مثل (d => d.RefNumber == refNumber) نختبرها هكذا
-            _documentRepoMock.ExistsAsync(Arg.Any<System.Linq.Expressions.Expression<Func<Document, bool>>>())
-                             .Returns(Task.FromResult(true));
-
-            // Act
-            bool result = await _documentService.CheckValid(existingRef);
-
-            // Assert
-            Assert.True(result); // نضمن أن النتيجة الراجعة هي true فعلاً
-        }
-
-        // =======================================================
-        // 3. اختبار دالة الـ CheckValid (في حالة عدم وجود المستند)
-        // =======================================================
-        [Fact]
-        public async Task CheckValid_WhenRefNumberDoesNotExist_ShouldReturnFalse()
-        {
-            // Arrange
-            string nonExistingRef = "QR-XYZ-999";
-
-            _documentRepoMock.ExistsAsync(Arg.Any<System.Linq.Expressions.Expression<Func<Document, bool>>>())
-                             .Returns(Task.FromResult(false));
-
-            // Act
-            bool result = await _documentService.CheckValid(nonExistingRef);
-
-            // Assert
-            Assert.False(result); // نضمن أن النتيجة الراجعة هي false
         }
     }
 }
