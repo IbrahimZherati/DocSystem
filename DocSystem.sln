@@ -16,6 +16,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccess", "DataAccess\DataAccess.csproj", "{5FE4EE57-D9F3-4F2D-9040-6F424618A00F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{5D549113-5395-4B97-B733-BA9C9890806B}"
+	ProjectSection(SolutionItems) = preProject
+		DocServiceTest.cs = DocServiceTest.cs
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Testing", "Testing\Testing.csproj", "{227E1602-4A26-4038-8C7C-3D2814AFAF8A}"
 EndProject
