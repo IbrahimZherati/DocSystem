@@ -28,7 +28,7 @@ namespace DataAccess.Entities
         public virtual Student? Student { get; set; }
 
 
-
+        //complexity 1 (D + 1)
         public void GenerateQRCode()
         {
             using var qrCodeData = QRCodeGenerator.GenerateQrCode(RefNumber, QRCodeGenerator.ECCLevel.Q);
